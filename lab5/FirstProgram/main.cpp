@@ -21,23 +21,84 @@
 #include <fstream>
 #include <vector>
 // Defining adjustable variables
-#define NUM_THREADS     500
+#define NUM_THREADS     50
 #define NUM_ITERATION   10
 // Defining the available resources, shared variable
 int available_resources = 10;
+std::ofstream outputFile;
 // Defining the semaphores
 sem_t semaphore;
 // Defining the mutex
 pthread_mutex_t mutex;
+// Defining a struct to pass arguments to write in the file
+struct data {
+    // Thread id
+    long id;
+    // Iteration of the thread
+    int iteration;
+    // A lil protocol to know what 2 print
+    int signal;
+    // At that time the available resource
+    int availableResource;
+};
+// Writing in the file
+void writeFile(void* arg) {
+    // Getting the arguments
+    struct data* info = (struct data*)arg;
+    std::ifstream inputFile("results.txt");
+    if (inputFile.is_open()) 
+    {
+        std::string line;
+        std::string lastLine;
+        while (std::getline(inputFile, line)){ lastLine = line;}
+        inputFile.close();
+        outputFile.open("results.txt", std::ios::app);
+        // Depending on the signal it will be writen in the text file
+        switch (info->signal)
+        {
+        case 1:
+        // Initialization
+            outputFile << "Hello from my thread "<<info->id<<" Initialization of the iteration "<<info->iteration<<std::endl;
+            outputFile.close();
+            // printf("Hello from my thread %ld! Initialization of the iteration #%d\n", info->id, info->iteration);
+            break;
+        case 2:
+        // Using the resource
+            outputFile << "Doing something with the resource in the thread # "<<info->id<<" , "<<info->availableResource<<std::endl;
+            outputFile.close();
+            // std::cout <<"Doing something with the resource in the thread #"<<info->id<<" , "<<info->availableResource<<" resources available\n";
+            break;
+        case 3:
+        // Returning the resource
+            outputFile << "Returning the resource in the thread #"<<info->id<<" , "<<info->availableResource<<" resources available"<<std::endl;
+            outputFile.close();
+            // std::cout <<"Returning the resource in the thread #"<<info->id<<", "<<info->availableResource<<" resources available\n";
+            break;
+        default:
+            break;
+        }
+    } 
+    else
+    {
+        std::cout <<"Failed to open the file."<<std::endl;
+    }
+    
+}
 // Defining the shared function
 void *threadFunction(void *arg){
+    // Defining the struct
+    data results;
     // Defining the threadId
-    long threadId = (long) arg;
+    results.id = (long) arg;
     // Defining the iteration
     for (int i = 0; i < NUM_ITERATION; i++)
     {
+        results.iteration = i;
+        results.signal = 1;
         // Printing the enter of the thread
-        printf("Hello from my thread %ld! Initialization of the iteration #%d\n", threadId, i);
+        pthread_mutex_lock(&mutex);
+        writeFile(&results);
+        pthread_mutex_unlock(&mutex);
         // Defining the random time variables
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -48,16 +109,22 @@ void *threadFunction(void *arg){
         sem_wait(&semaphore);
         // In case the shared resources are at 0 it enters in an infinite loop till the resource is released
         while (available_resources == 0){};
-        // pthread_mutex_lock(&mutex);
         // Substracting resources
         available_resources--;
-        std::cout <<"Doing something with the resource in the thread #"<<threadId<<" , "<<available_resources<<" resources available\n";
+        results.signal = 2;
+        results.availableResource = available_resources;
+        pthread_mutex_lock(&mutex);
+        writeFile(&results);
+        pthread_mutex_unlock(&mutex);
         // Doing something or emulating something with the resource
         usleep(randomNum1*randomNum2);
         // Returning the shared resource
         available_resources++;
-        std::cout <<"Returning the resource in the thread #"<<threadId<<", "<<available_resources<<" resources available\n";
-        // pthread_mutex_unlock(&mutex);
+        results.signal = 3;
+        results.availableResource = available_resources;
+        pthread_mutex_lock(&mutex);
+        writeFile(&results);
+        pthread_mutex_unlock(&mutex);
         // Releasing semaphore
         sem_post(&semaphore);
     }
