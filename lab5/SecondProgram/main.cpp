@@ -63,24 +63,25 @@ class ResourceMonitor {
             }
             // Consuming the resources
             availableResources -= numResources;
-            std::cout << "Consumed " << numResources << " resources. Available resources: " << availableResources << std::endl;
-
+            // Unlock the mutex
             pthread_mutex_unlock(&mutex_);
         }
-
+        // Release resources method
         void releaseResources(int numResources) {
+            // Locking the mutex exclusion
             pthread_mutex_lock(&mutex_);
-
-            // Liberar recursos
+            // Free resources
             availableResources += numResources;
-            std::cout << "Released " << numResources << " resources. Available resources: " << availableResources << std::endl;
-
+            // Sending a signal
             pthread_cond_broadcast(&cond_);
-
+            // Mutex unlock
             pthread_mutex_unlock(&mutex_);
         }
+        // Method to write on file
         void writeOnFile(data info){
+            // Locks the mutex
             pthread_mutex_lock(&mutex_);
+            // Writing the data
             std::ifstream inputFile("results.txt");
             if (inputFile.is_open()) 
             {
@@ -131,6 +132,7 @@ void *threadFunction(void *arg){
     // Defining the iteration
     for (int i = 0; i < NUM_ITERATION; i++)
     {
+        // Signal of init
         results.iteration = i;
         results.signal = 1;
         // Printing the enter of the thread
