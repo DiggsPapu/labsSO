@@ -82,14 +82,14 @@ class ResourceMonitor {
             // Locks the mutex
             pthread_mutex_lock(&mutex_);
             // Writing the data
-            std::ifstream inputFile("results.txt");
+            std::ifstream inputFile("secondoutput.txt");
             if (inputFile.is_open()) 
             {
                 std::string line;
                 std::string lastLine;
                 while (std::getline(inputFile, line)){ lastLine = line;}
                 inputFile.close();
-                outputFile.open("results.txt", std::ios::app);
+                outputFile.open("secondoutput.txt", std::ios::app);
                 // Depending on the signal it will be writen in the text file
                 switch (info.signal)
                 {

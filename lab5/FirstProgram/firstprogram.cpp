@@ -45,14 +45,14 @@ struct data {
 void writeFile(void* arg) {
     // Getting the arguments
     struct data* info = (struct data*)arg;
-    std::ifstream inputFile("results.txt");
+    std::ifstream inputFile("outputFirstProgram.txt");
     if (inputFile.is_open()) 
     {
         std::string line;
         std::string lastLine;
         while (std::getline(inputFile, line)){ lastLine = line;}
         inputFile.close();
-        outputFile.open("results.txt", std::ios::app);
+        outputFile.open("outputFirstProgram.txt", std::ios::app);
         // Depending on the signal it will be writen in the text file
         switch (info->signal)
         {
